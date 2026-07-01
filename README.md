@@ -241,24 +241,3 @@ environment variables from `.env.example` (at minimum `GOOGLE_API_KEY`),
 and deploy. `GET /health` is used as the readiness check; the assignment
 allows up to 2 minutes for a cold start to respond.
 
-## Limitations & future improvements
-
-- **Slot extraction is a single LLM call per turn** with a JSON-parse
-  fallback to an empty profile. A structured output parser (LangChain's
-  `PydanticOutputParser` / Gemini's native JSON mode) would remove the
-  manual `json.loads` + cleanup step entirely.
-- **No cross-encoder re-ranking.** The current pipeline stops at
-  bi-encoder + BM25 + metadata fusion. A lightweight cross-encoder re-rank
-  of the top ~25 candidates would likely improve Recall@10 further,
-  at the cost of latency - worth evaluating against the 30s budget.
-- **Comparison intent resolution is substring-based** (`app/services/comparison_service.py`).
-  It works well for exact/near-exact product names but won't resolve a
-  comparison phrased entirely by category ("compare a personality test to
-  an ability test").
-- **No caching layer.** Repeated identical queries re-run the full hybrid
-  retrieval + LLM call. An in-memory LRU cache keyed on
-  `(query_text, constraints)` would cut latency and Gemini spend for
-  repeated evaluator runs.
-- **Single-provider LLM.** The `LLMClient` protocol supports swapping
-  providers, but only the Gemini adapter is implemented; a second adapter
-  (e.g. for provider fallback/failover) is future work.
